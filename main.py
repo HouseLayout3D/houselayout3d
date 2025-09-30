@@ -8,4 +8,3 @@ for config in configs:
     datasets[config] = load_dataset("houselayout3d/HouseLayout3D", config)
   except:
     print(f'skipping {config}')
-
