@@ -20,7 +20,9 @@ git lfs
 git clone https://huggingface.co/datasets/houselayout3d/HouseLayout3D data
 ```
 
-Next, you van visualize the HouseLayout3D dataset as follows:
+## Visualizing the dataset
+
+Next, you can visualize the HouseLayout3D dataset as follows:
 
 ```
 python visualize.py
