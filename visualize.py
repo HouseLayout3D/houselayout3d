@@ -7,45 +7,47 @@ from typing import List
 
 
 def load_json_annotations(path: str, filter: int = 0) -> List[dict]:
-  """Loads the door annotations.
-
-  A door consists of four vertices, and a normal indicating the direction of opening.
+  """Loads JSON annotations (doors, windows, or poses).
 
   Args:
-      path (str): Path to the door annotations for a scene.
+      path: Path to the JSON annotation file.
+      filter: If provided, selects a specific key index from the JSON dict.
 
   Returns:
-      []: List of doors. Each entry is a dict with keys {vertices, normal}.
-      There are 4 vertices each consisting in  
+      List of annotation dicts. Empty list if file not found.
   """
   try:
-    with open(path, "r") as f:
-      doors_data = json.load(f)
+    with open(path, 'r') as f:
+      data = json.load(f)
     if filter is not None:
-      doors_list = doors_data[list(doors_data.keys())[filter]]
-    else:
-      doors_list = doors_data
-  except:
-    doors_list = []
-  return doors_list
+      return data[list(data.keys())[filter]]
+    return data
+  except (FileNotFoundError, IndexError, KeyError, json.JSONDecodeError):
+    return []
 
 
 def load_mesh_filenames(path: str) -> List[str]:
+  """Loads mesh filenames from a directory.
+
+  Args:
+      path: Directory path containing mesh files.
+
+  Returns:
+      List of .ply and .obj filenames. Empty list if directory not found.
+  """
   try:
-    filenames = [f for f in os.listdir(path) if f.endswith('.ply') or f.endswith('.obj') ]
-  except:
-    filenames = []
-  return filenames
+    return [f for f in os.listdir(path) if f.endswith(('.ply', '.obj'))]
+  except FileNotFoundError:
+    return []
 
 
 def visualize_scene(scene_name: str = '1LXtFkjw3qL'):
-  print(f"Showing {scene_name}")
+  print(f"Showing scene {scene_name}")
   
   doors_list = load_json_annotations(f'data/doors/{scene_name}.json')
   windows_list = load_json_annotations(f'data/windows/{scene_name}.json')
   stairs_list = load_mesh_filenames(f'data/stairs/{scene_name}')
   structure_list = load_mesh_filenames(f'data/structures/layouts_split_by_entity/{scene_name}')
-  poses_list = load_json_annotations(f'data/poses/{scene_name}.json', filter=1)
 
   v = viz.Visualizer()
   for i, door in enumerate(doors_list):
@@ -66,21 +68,11 @@ def visualize_scene(scene_name: str = '1LXtFkjw3qL'):
   for i, structure_filename in enumerate(sorted(structure_list)):
     v.add_mesh(f'structure;{i}', path=f'data/structures/layouts_split_by_entity/{scene_name}/{structure_filename}')
 
-  poses = []
-  for i, pose in enumerate(poses_list):
-    print(pose['file_path'])
-    trafo = pose['transform_matrix']  # 4x4 pose matrix
-    poses.append(np.array(trafo)[0:3, 3])
-
-  # v.add_polyline('cam', positions=np.vstack(poses), edge_width=0.05)
-
-  blender_config = viz.BlenderConfig(
-      output_prefix=f'~/{scene_name}.png',
-      blender_path='/Applications/Blender.app/Contents/MacOS/Blender')
-  v.save(f'scene_{scene_name}', blender_config=blender_config)
+  v.save(f'scene_{scene_name}', blender_config=None)
 
 
 def main():
+  """Visualizes all scenes in the dataset."""
   scene_names = [f[:-5] for f in os.listdir('data/doors')]
   for scene_name in scene_names:
     visualize_scene(scene_name)
